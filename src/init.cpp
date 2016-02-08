@@ -651,8 +651,8 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     if (!(mapArgs.count("-tor") && mapArgs["-tor"] != "0")) {
     	StartTor(threadGroup);
-    }
 	wait_initialized();
+    }
 
     if (mapArgs.count("-externalip")) {
         BOOST_FOREACH(string strAddr, mapMultiArgs["-externalip"]) {
