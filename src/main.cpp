@@ -1271,7 +1271,7 @@ const CBlockIndex* GetLastBlockIndexForAlgo(const CBlockIndex* pindex, int algo)
 
 int64 static GetBlockValue(int nHeight, int64 nFees)
 {
-    int64 nSubsidy = 0;
+    int64 nSubsidy = 0.5 * COIN;
     if (nHeight == 1) nSubsidy = 1400000 * COIN; // IPO block
     else
     if (nHeight <= 800) nSubsidy = 0.5 * COIN;
@@ -1285,6 +1285,8 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
     if (nHeight <= 40000) nSubsidy = 3 * COIN;
     else
     if (nHeight <= 626200) nSubsidy = 2 * COIN;
+    else
+    if (nHeight >= 630000 && nHeight <= 1329800) nSubsidy = 1 * COIN;
 
     return nSubsidy + nFees;
 }
@@ -1362,10 +1364,10 @@ unsigned int static DigiShield_Buggy(const CBlockIndex* pindexLast, const CBlock
     // Limit adjustment step
     int64 nActualTimespan = pindexPrev->GetBlockTime() - pindexFirst->GetBlockTime();
     printf(" nActualTimespan = %"PRI64d" before bounds\n", nActualTimespan);
-    
+
     CBigNum bnNew;
     bnNew.SetCompact(pindexLast->nBits);
-    
+
  //DigiShield implementation - thanks to RealSolid & WDC for this code
 // amplitude filter - thanks to daft27 for this code
         nActualTimespan = retargetTimespan + (nActualTimespan - retargetTimespan)/8;
@@ -1373,7 +1375,7 @@ unsigned int static DigiShield_Buggy(const CBlockIndex* pindexLast, const CBlock
         if (nActualTimespan < (retargetTimespan - (retargetTimespan/4)) ) nActualTimespan = (retargetTimespan - (retargetTimespan/4));
         if (nActualTimespan > (retargetTimespan + (retargetTimespan/2)) ) nActualTimespan = (retargetTimespan + (retargetTimespan/2));
     // Retarget
-    
+
     bnNew *= nActualTimespan;
     bnNew /= retargetTimespan;
 
@@ -1457,7 +1459,7 @@ unsigned int static DigiShield(const CBlockIndex* pindexLast, const CBlockHeader
 }
 
 
-    
+
 unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, int algo){
 	int nHeight = pindexLast->nHeight + 1;
 	if (nHeight < 417) return DigiShield_Buggy(pindexLast, pblock, algo);
@@ -2156,11 +2158,11 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
     nTimeBestReceived = GetTime();
     nTransactionsUpdated++;
     printf("SetBestChain: new best=%s  height=%d  pow_algo=%d  block_work=%s  log2_work=%.8g  tx=%lu  date=%s progress=%f\n",
-      hashBestChain.ToString().c_str(), 
-      nBestHeight, 
+      hashBestChain.ToString().c_str(),
+      nBestHeight,
       pindexNew->GetAlgo(),
       pindexNew->GetBlockWorkAdjusted().ToString().c_str(),
-      log(nBestChainWork.getdouble())/log(2.0), 
+      log(nBestChainWork.getdouble())/log(2.0),
       (unsigned long)pindexNew->nChainTx,
       DateTimeStrFormat("%Y-%m-%d %H:%M:%S", pindexBest->GetBlockTime()).c_str(),
       Checkpoints::GuessVerificationProgress(pindexBest));
@@ -4437,7 +4439,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, int algo)
             error("CreateNewBlock: bad algo");
             return NULL;
     }
-    
+
     // Create coinbase tx
     CTransaction txNew;
     txNew.vin.resize(1);
@@ -4744,20 +4746,20 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     //printf("Algo=%d\n", algo);
     uint256 hashPoW = pblock->GetPoWHash(algo);
     uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
-    //printf("pow-hash: %s\n  target: %s\n", 
-    //    hashPoW.GetHex().c_str(), 
+    //printf("pow-hash: %s\n  target: %s\n",
+    //    hashPoW.GetHex().c_str(),
     //    hashTarget.GetHex().c_str());
-     
+
     if (hashPoW > hashTarget)
         return false;
-        
+
     uint256 hashBlock = pblock->GetHash();
 
     //// debug print
     printf("JoincoinMiner:\n");
-    printf("proof-of-work found\n  block-hash: %s\n  pow-hash: %s\n  target: %s\n", 
-        hashBlock.GetHex().c_str(), 
-        hashPoW.GetHex().c_str(), 
+    printf("proof-of-work found\n  block-hash: %s\n  pow-hash: %s\n  target: %s\n",
+        hashBlock.GetHex().c_str(),
+        hashPoW.GetHex().c_str(),
         hashTarget.GetHex().c_str());
     pblock->print();
     printf("generated %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue).c_str());
@@ -4788,7 +4790,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
 
 void static MinerWaitOnline()
 {
-    if (Params().NetworkID() != CChainParams::REGTEST) 
+    if (Params().NetworkID() != CChainParams::REGTEST)
     {
         // Busy-wait for the network to come online so we don't waste time mining
         // on an obsolete chain. In regtest mode we expect to fly solo.
@@ -4806,7 +4808,7 @@ void static BitcoinMiner(CWallet *pwallet)
     CReserveKey reservekey(pwallet);
     unsigned int nExtraNonce = 0;
 
-    loop 
+    loop
     {
         MinerWaitOnline();
 
@@ -4930,7 +4932,7 @@ void static BitcoinMiner(CWallet *pwallet)
                 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
             }
         }
-    } 
+    }
 }
 
 void static ScryptMiner(CWallet *pwallet)
@@ -4942,7 +4944,7 @@ void static ScryptMiner(CWallet *pwallet)
     loop
     {
         MinerWaitOnline();
-        
+
         //
         // Create new block
         //
@@ -4954,7 +4956,7 @@ void static ScryptMiner(CWallet *pwallet)
             return;
         CBlock *pblock = &pblocktemplate->block;
         IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
-            
+
         printf("Running scrypt miner with %"PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 
@@ -5060,7 +5062,7 @@ void static ScryptMiner(CWallet *pwallet)
                 nBlockBits = ByteReverse(pblock->nBits);
                 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
             }
-            
+
         }
     }
 }
@@ -5071,7 +5073,7 @@ void static GenericMiner(CWallet *pwallet, int algo)
     CReserveKey reservekey(pwallet);
     unsigned int nExtraNonce = 0;
 
-    loop 
+    loop
     {
         MinerWaitOnline();
 
@@ -5087,7 +5089,7 @@ void static GenericMiner(CWallet *pwallet, int algo)
         CBlock *pblock = &pblocktemplate->block;
         IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
-        printf("Running %s miner with %"PRIszu" transactions in block (%u bytes)\n", 
+        printf("Running %s miner with %"PRIszu" transactions in block (%u bytes)\n",
                GetAlgoName(algo).c_str(),
                pblock->vtx.size(),
                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
@@ -5112,7 +5114,7 @@ void static GenericMiner(CWallet *pwallet, int algo)
                 break;
             }
             ++pblock->nNonce;
-            
+
             // Meter hashes/sec
             static int64 nHashCounter;
             if (nHPSTimerStart == 0)
@@ -5163,7 +5165,7 @@ void static GenericMiner(CWallet *pwallet, int algo)
                 // hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
             }
         }
-    } 
+    }
 }
 
 void static ThreadBitcoinMiner(CWallet *pwallet)
@@ -5171,8 +5173,8 @@ void static ThreadBitcoinMiner(CWallet *pwallet)
     printf("Joincoin miner started\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
     RenameThread("bitcoin-miner");
-    
-    try 
+
+    try
     {
         switch (miningAlgo)
         {
