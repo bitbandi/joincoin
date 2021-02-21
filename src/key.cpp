@@ -2,6 +2,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <openssl/bn.h>
 #include <openssl/ecdsa.h>
 #include <openssl/rand.h>
 #include <openssl/obj_mac.h>
@@ -148,11 +149,13 @@ public:
     }
 
     void SetSecretBytes(const unsigned char vch[32]) {
-        BIGNUM bn;
-        BN_init(&bn);
-        assert(BN_bin2bn(vch, 32, &bn));
-        assert(EC_KEY_regenerate_key(pkey, &bn));
-        BN_clear_free(&bn);
+        bool ret;
+        BIGNUM *bn = BN_new();
+        ret = BN_bin2bn(vch, 32, bn);
+        assert(ret);
+        ret = EC_KEY_regenerate_key(pkey, bn);
+        assert(ret);
+        BN_clear_free(bn);
     }
 
     void GetPrivKey(CPrivKey &privkey, bool fCompressed) {
@@ -248,6 +251,10 @@ public:
         if (rec<0 || rec>=3)
             return false;
         ECDSA_SIG *sig = ECDSA_SIG_new();
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+        sig->r = BN_new();
+        sig->s = BN_new();
+#endif
         BN_bin2bn(&p64[0],  32, sig->r);
         BN_bin2bn(&p64[32], 32, sig->s);
         bool ret = ECDSA_SIG_recover_key_GFp(pkey, sig, (unsigned char*)&hash, sizeof(hash), rec, 0) == 1;
