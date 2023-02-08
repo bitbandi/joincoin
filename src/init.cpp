@@ -613,7 +613,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     );
 
     CService addrOnion;
-    unsigned short const onion_port = 9060;
+    unsigned short const onion_port = 9050;
 
     if (mapArgs.count("-tor") && mapArgs["-tor"] != "0") {
         addrOnion = CService(mapArgs["-tor"], onion_port);
@@ -661,24 +661,6 @@ bool AppInit2(boost::thread_group& threadGroup)
                 return InitError(strprintf(_("Cannot resolve -externalip address: '%s'"), strAddr.c_str()));
             AddLocal(CService(strAddr, GetListenPort(), fNameLookup), LOCAL_MANUAL);
         }
-    } else {
-         string automatic_onion;
-         filesystem::path const hostname_path = GetDefaultDataDir(
-         ) / "onion" / "hostname";
-         if (
-             !filesystem::exists(
-                 hostname_path
-             )
-         ) {
-             return InitError(_("No external address found."));
-         }
-         ifstream file(
-             hostname_path.string(
-             ).c_str(
-             )
-         );
-         file >> automatic_onion;
-         AddLocal(CService(automatic_onion, GetListenPort(), fNameLookup), LOCAL_MANUAL);
     }
 
     BOOST_FOREACH(string strDest, mapMultiArgs["-seednode"])

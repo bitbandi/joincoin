@@ -1672,7 +1672,7 @@ static void run_tor() {
         "--Log",
         argvLogDecl
      };
-	 tor_main(4, argv);
+//	 tor_main(4, argv);
  }
 
 void StartNode(boost::thread_group& threadGroup)
