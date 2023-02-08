@@ -632,26 +632,24 @@ bool AppInit2(boost::thread_group& threadGroup)
     fNameLookup = GetBoolArg("-dns", true);
 
     bool fBound = false;
-    if (true) {
-        if (true) {
-            do {
+    if (true)
+    {
+        std::string strError;
+        if (mapArgs.count("-bind")) {
+            BOOST_FOREACH(std::string strBind, mapMultiArgs["-bind"]) {
                 CService addrBind;
-               if (!Lookup("127.0.0.1", addrBind, GetListenPort(), false))
-                    return InitError(strprintf(_("Cannot resolve binding address: '%s'"), "127.0.0.1"));
+                if (!Lookup(strBind.c_str(), addrBind, GetListenPort(), false))
+                    return InitError(strprintf(_("Cannot resolve -bind address: '%s'"), strBind.c_str()));
                 fBound |= Bind(addrBind, (BF_EXPLICIT | BF_REPORT_ERROR));
-            } while (
-                false
-            );
+            }
+        } else {
+            CService addrBind;
+            if (!Lookup("127.0.0.1", addrBind, GetListenPort(), false))
+                return InitError(strprintf(_("Cannot resolve binding address: '%s'"), "127.0.0.1"));
+            fBound |= Bind(addrBind, (BF_EXPLICIT | BF_REPORT_ERROR));
         }
-
         if (!fBound)
-            return InitError(_("Failed to listen on any port."));
-
-    }
-
-    if (!(mapArgs.count("-tor") && mapArgs["-tor"] != "0")) {
-    	StartTor(threadGroup);
-	wait_initialized();
+            return InitError(_("Failed to listen on any port. Use -listen=0 if you want this."));
     }
 
     if (mapArgs.count("-externalip")) {
